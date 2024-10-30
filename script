@@ -1,0 +1,175 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MAX_COUNTRIES 100
+#define MAX_NAME_LEN 50
+
+// Estruturas para armazenar país, estado e cidade
+typedef struct {
+    char **cities; // Lista de cidades
+    int city_count; // Quantidade de cidades
+} State;
+
+typedef struct {
+    char name[MAX_NAME_LEN]; // Nome do país
+    State *states; // Lista de estados
+    int state_count; // Quantidade de estados
+} Country;
+
+Country *countries[MAX_COUNTRIES]; // Lista de países
+int country_count = 0; // Quantidade de países registrados
+
+// Função para confirmar respostas booleanas (Sim/Não)
+int confirm_response() {
+    char response[3];
+    printf("Digite 'S' para Sim ou 'N' para Não: ");
+    scanf("%s", response);
+    return (response[0] == 'S' || response[0] == 's') ? 1 : 0;
+}
+
+// Função para adicionar um novo país
+void add_country() {
+    if (country_count >= MAX_COUNTRIES) {
+        printf("Erro: Limite de países atingido.\n");
+        return;
+    }
+
+    Country *new_country = (Country *)malloc(sizeof(Country));
+    printf("Digite o nome do país: ");
+    scanf("%s", new_country->name);
+    new_country->state_count = 0;
+    new_country->states = NULL;
+
+    countries[country_count++] = new_country;
+    printf("País '%s' adicionado com sucesso!\n", new_country->name);
+}
+
+// Função para adicionar um novo estado a um país
+void add_state(Country *country) {
+    country->states = (State *)realloc(country->states, sizeof(State) * (country->state_count + 1));
+    State *new_state = &country->states[country->state_count++];
+    new_state->city_count = 0;
+    new_state->cities = NULL;
+
+    printf("Digite o nome do estado: ");
+    char state_name[MAX_NAME_LEN];
+    scanf("%s", state_name);
+    printf("Estado '%s' adicionado ao país '%s'.\n", state_name, country->name);
+}
+
+// Função para adicionar uma nova cidade a um estado
+void add_city(State *state) {
+    state->cities = (char **)realloc(state->cities, sizeof(char *) * (state->city_count + 1));
+    state->cities[state->city_count] = (char *)malloc(MAX_NAME_LEN * sizeof(char));
+
+    printf("Digite o nome da cidade: ");
+    scanf("%s", state->cities[state->city_count++]);
+
+    printf("Cidade adicionada com sucesso!\n");
+}
+
+// Função para buscar países
+Country *find_country(char *name) {
+    for (int i = 0; i < country_count; i++) {
+        if (strcmp(countries[i]->name, name) == 0) {
+            return countries[i];
+        }
+    }
+    return NULL;
+}
+
+// Função para buscar estados em um país
+State *find_state(Country *country, char *name) {
+    for (int i = 0; i < country->state_count; i++) {
+        // Aqui estamos ignorando nomes de estados, mas podemos expandir isso
+        return &country->states[i];
+    }
+    return NULL;
+}
+
+// Função para o sistema de pesquisa
+void search_system() {
+    char country_name[MAX_NAME_LEN];
+    printf("Qual país você quer consultar? ");
+    scanf("%s", country_name);
+
+    Country *found_country = find_country(country_name);
+    if (found_country) {
+        printf("País '%s' encontrado!\n", found_country->name);
+
+        char state_name[MAX_NAME_LEN];
+        printf("Qual estado do país '%s' você quer consultar? ", found_country->name);
+        scanf("%s", state_name);
+
+        State *found_state = find_state(found_country, state_name);
+        if (found_state) {
+            printf("Estado '%s' encontrado!\n", state_name);
+
+            char city_name[MAX_NAME_LEN];
+            printf("Qual cidade do estado '%s' você quer consultar? ", state_name);
+            scanf("%s", city_name);
+
+            for (int i = 0; i < found_state->city_count; i++) {
+                if (strcmp(found_state->cities[i], city_name) == 0) {
+                    printf("Cidade '%s' encontrada!\n", city_name);
+                    return;
+                }
+            }
+            printf("Cidade não encontrada!\n");
+        } else {
+            printf("Estado '%s' não encontrado!\n", state_name);
+            printf("Quer adicionar esse estado? ");
+            if (confirm_response()) {
+                add_state(found_country);
+            }
+        }
+    } else {
+        printf("País '%s' não encontrado!\n", country_name);
+        printf("Quer adicionar esse país? ");
+        if (confirm_response()) {
+            add_country();
+        }
+    }
+}
+
+// Função de introdução ao jogo
+void show_intro() {
+    printf("=== Bem-vindo ao Card Battle Country! ===\n");
+    printf("Você pode consultar países, estados e cidades.\n");
+    printf("Ou adicionar novas informações ao sistema.\n");
+    printf("Comandos disponíveis:\n");
+    printf("1. Consultar países\n");
+    printf("2. Adicionar países\n");
+    printf("3. Sair\n");
+}
+
+// Função de comando para interagir com o usuário
+void command_system() {
+    int choice;
+    do {
+        show_intro();
+        printf("Escolha um comando: ");
+        scanf("%d", &choice);
+
+        switch (choice) {
+            case 1:
+                search_system();
+                break;
+            case 2:
+                add_country();
+                break;
+            case 3:
+                printf("Saindo do sistema...\n");
+                break;
+            default:
+                printf("Comando inválido!\n");
+        }
+    } while (choice != 3);
+}
+
+// Função principal
+int main() {
+    command_system(); // Inicia o sistema de comando
+    return 0;
+}
